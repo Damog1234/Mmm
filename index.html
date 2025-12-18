@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GENLAYER ROLE PROGRESS</title>
+    <style>
+        :root { --discord: #5865F2; --bg: #0d1117; --sin: #33FF33; }
+        body { font-family: 'Arial Black', sans-serif; background: var(--bg); color: white; text-align: center; padding: 15px; margin: 0; }
+        
+        #status { font-size: 0.8rem; color: var(--sin); margin-bottom: 10px; font-family: monospace; }
+
+        /* TOP 3 PODIUM */
+        .podium { display: flex; justify-content: center; gap: 10px; margin-bottom: 25px; max-width: 500px; margin-inline: auto; }
+        .p-card { background: #161b22; padding: 15px; border-radius: 15px; flex: 1; border: 2px solid #334155; }
+        .p-1 { border-color: #FFD700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.3); }
+        .p-img { width: 60px; height: 60px; border-radius: 50%; border: 2px solid #fff; margin-bottom: 5px; }
+        .p-name { display: block; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; }
+
+        /* SEARCH AREA */
+        .card { max-width: 500px; margin: auto; background: #161b22; padding: 30px 20px; border-radius: 25px; border: 4px solid var(--discord); }
+        input { width: 85%; padding: 18px; border-radius: 12px; border: none; background: #010409; color: white; font-size: 1.3rem; margin-bottom: 15px; text-align: center; }
+        .btn { background: var(--discord); color: white; border: none; padding: 18px; width: 95%; border-radius: 12px; font-weight: 900; font-size: 1.4rem; cursor: pointer; text-transform: uppercase; }
+
+        /* PROGRESS RESULT */
+        #result { margin-top: 30px; padding: 30px; background: #000; border-radius: 25px; border: 6px solid #fff; display: none; }
+        .res-name { font-size: 2.5rem; text-transform: uppercase; display: block; }
+        .res-lvl { font-size: 4rem; color: #fff; line-height: 1; margin: 10px 0; }
+        .res-goal { font-size: 1.2rem; color: var(--sin); font-weight: bold; letter-spacing: 1px; }
+        .prog-bar { height: 12px; background: #333; border-radius: 10px; margin-top: 20px; overflow: hidden; }
+        .prog-fill { height: 100%; background: var(--sin); transition: width 1s ease-in-out; }
+    </style>
+</head>
+<body>
+
+    <div id="status">📡 SYNCING WITH GENLAYER...</div>
+
+    <div class="podium" id="podiumBox"></div>
+
+    <div class="card">
+        <h1>SINGULARITY TRACKER</h1>
+        <input type="text" id="userInput" placeholder="DISCORD USERNAME...">
+        <button class="btn" onclick="doSearch()">CHECK PROGRESS 🚀</button>
+
+        <div id="result">
+            <span id="resName" class="res-name"></span>
+            <div style="font-size: 1rem; color: #8b949e;">CURRENT LEVEL</div>
+            <div id="resLvl" class="res-lvl"></div>
+            <div id="resGoal" class="res-goal"></div>
+            <div class="prog-bar"><div id="resFill" class="prog-fill" style="width: 0%"></div></div>
+        </div>
+    </div>
+
+    <script>
+        const SID = "1237055789441487021";
+        const SINGULARITY_LVL = 54;
+        let players = [];
+
+        async function init() {
+            const proxy = "https://api.allorigins.win/get?url=";
+            const url = `https://mee6.xyz/api/plugins/levels/leaderboard/${SID}?cb=${Date.now()}`;
+            try {
+                const res = await fetch(proxy + encodeURIComponent(url));
+                const json = await res.json();
+                players = JSON.parse(json.contents).players;
+                document.getElementById('status').innerText = "✅ LIVE DATA CONNECTED";
+                showTop3();
+            } catch (e) { document.getElementById('status').innerText = "❌ ERROR RELOAD PAGE"; }
+        }
+
+        function showTop3() {
+            const box = document.getElementById('podiumBox');
+            players.slice(0, 3).forEach((p, i) => {
+                const div = document.createElement('div');
+                div.className = `p-card ${i === 0 ? 'p-1' : ''}`;
+                const ava = p.avatar ? `https://cdn.discordapp.com/avatars/${p.id}/${p.avatar}.png` : `https://cdn.discordapp.com/embed/avatars/0.png`;
+                div.innerHTML = `<img src="${ava}" class="p-img"><span class="p-name">${p.username}</span><span style="font-size: 0.7rem">LVL ${p.level}</span>`;
+                box.appendChild(div);
+            });
+        }
+
+        function doSearch() {
+            const val = document.getElementById('userInput').value.toLowerCase().trim();
+            const p = players.find(x => x.username.toLowerCase() === val);
+            if (p) {
+                const res = document.getElementById('result');
+                document.getElementById('resName').innerText = p.username;
+                document.getElementById('resLvl').innerText = p.level;
+                
+                const levelsAway = SINGULARITY_LVL - p.level;
+                const goalEl = document.getElementById('resGoal');
+                const fill = document.getElementById('resFill');
+                
+                if (levelsAway <= 0) {
+                    goalEl.innerText = "🏆 SINGULARITY ACHIEVED!";
+                    fill.style.width = "100%";
+                } else {
+                    goalEl.innerText = `${levelsAway} LEVELS UNTIL SINGULARITY`;
+                    const percent = (p.level / SINGULARITY_LVL) * 100;
+                    fill.style.width = `${percent}%`;
+                }
+                
+                res.style.display = "block";
+            } else { alert("User not found!"); }
+        }
+        init();
+    </script>
+</body>
+</html>
